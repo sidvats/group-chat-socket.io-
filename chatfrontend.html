@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAT APP</title>
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+        html,body{
+            margin: 0;
+            padding: 0;
+            background-size: cover;
+            background: rgb(0, 0, 0);
+            height: 100%;
+        }
+        h1{
+            text-align: center;
+            color: chartreuse;
+            box-shadow: 0px 0px 10px 0px  greenyellow;
+        }
+        .chat{
+            display: flex;
+            flex-direction: row;
+        }
+        .message-form{
+            flex:40%;
+            margin: 2rem 2rem 2rem 2rem;
+            width: 100%;
+        }
+        .message-box{
+            box-shadow: greenyellow 0px 0px 10px 0px;
+            overflow-y: auto;
+            overscroll-behavior-y: contain;
+            scroll-snap-type: y proximity;
+            flex:60%;
+            color: hotpink;
+            margin: 2rem 2rem 2rem 2rem;
+            background: grey;
+            caret-color: transparent;
+            height: 80vh;
+        }
+        .message-box >div:last-child{
+            scroll-snap-align: end;
+        }
+        @media(max-width:700px){
+            .chat{
+                flex-direction: column;
+            }
+        }
+        @keyframes highlighter{
+            from { background: linear-gradient(45deg,green,lightgreen);}
+            to { background: green }
+        }
+        button{
+            height: 2rem;
+            background: linear-gradient(45deg,green,lightgreen);
+            color: rgb(56, 0, 47);
+            font-weight: bold;
+            font-size: 20px;
+            letter-spacing: 5px;
+            border-radius: 8px;
+        }
+         button:hover{
+            animation-name: highlighter;
+            animation-duration: 1s;
+            font-weight: bolder;
+            font-size: 22px;
+            letter-spacing: 6px;
+        } 
+        .msg{
+            padding: 10px;
+            background: linear-gradient(black,rgb(66, 62, 62));
+            border-radius: 10px;
+            max-width: 50%;
+            margin-top: 5px;
+            font-size: larger;
+            font-weight: bold;
+            font-family: cursive;
+        }
+        .right{
+            float:right;
+            clear: both;
+        }
+        .left{
+            float: left;
+            clear: both;
+        }
+        .active-users{
+            box-shadow: gold 0px 0px 10px 0px;
+            padding: 5px;
+            margin: 1rem 1rem 1rem 1rem;
+        }
+        .user{
+            background: burlywood;
+            color: darkblue;
+            font-weight: bolder;
+            font-size: large;
+            border-radius: 10px;
+            padding: 2px;
+            text-align: center;
+            margin: 5px 0px 5px 0px;
+        }
+        #message{
+            width: 90%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome To Group Chat</h1>
+    <div class="chat">
+        <div class="message-box">
+            
+        </div>
+        <div class=message-form>
+            <div class="form">
+                <form action="#" id="formsend">
+                    <textarea name="message" id="message"></textarea><br>
+                    <button type="submit" id="send">SEND</button>
+                </form>
+            </div>
+            <div class="active-users">
+                <h2 style="color: gold; text-align: center; box-shadow: 0px 0px 5px 0px goldenrod;">Online users</h2>
+               
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var nickname=prompt("Welcome to Chat Application \n please enter your name");
+        var messagebox=document.querySelector('div.message-box');
+        var msginput=document.getElementById('message');
+        const form=document.getElementById('formsend');
+
+        const append = (msg,pos)=>{
+            var newdiv=document.createElement('div');
+            newdiv.innerText=msg;
+            newdiv.classList.add('msg');
+            newdiv.classList.add(pos);
+            messagebox.append(newdiv);
+        }
+        
+        var socket=io('');
+        socket.on('init',()=>{
+            append(`Welcome ${nickname} to Group Chat`,'right');
+        });
+        socket.emit('new-user-joined',nickname);
+        socket.on('user-joined',name=>{
+            append(`${name} Joined the Chat`,'left');
+        });
+
+        form.addEventListener('submit',(action)=>{
+            action.preventDefault();
+            append(`You :: ${msginput.value}`,'right');
+            socket.emit('send',{msg:msginput.value,name:nickname});
+            msginput.value="";
+        })
+        socket.on('receive',(data)=>{
+            const time=new Date();
+            const hr=time.getHours();
+            const min=time.getMinutes();
+            const date=time.getDate();
+            append(`${data.name} :: ${data.msg} \n\n DATE:${date} TIME::${hr} : ${min}`,'left');
+        })
+        socket.on('active-users',users=>{
+            Object.keys(users).forEach(key=>{
+            var newdiv=document.createElement('div');
+            newdiv.innerText=users[key];
+            newdiv.classList.add('user');
+            document.querySelector('.active-users').append(newdiv);
+            })
+        });
+
+    </script>
+</body>
+</html>
